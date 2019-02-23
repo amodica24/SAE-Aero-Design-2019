@@ -1,0 +1,60 @@
+clc;
+clear all;
+close all;
+
+% this code determines the minimum current draw from the total system and then
+% determines the minimum battery capacitance
+
+% we can then use the current draw to calculate the C rating, which
+% determines how much current can be drawn
+
+
+% we want at most 10 minutes of flying, just in case the CDA takes too long
+% to fly, we do not want it to lose power
+min_flying = 10;
+
+% current draw from the Arduino Nano 20 mA (according to datasheet)
+arduino_nano = 20 *10^-3;
+
+% current draw for xBee Pro, 55 mA (according to datasheet when xBee is
+% receiving data)
+xBee = 215 *10^-3;
+
+% current draw for the 2 servos, each one needs 150 mA
+%servos = 2 * (300 *10^-3);
+servos = 2*400*10^-3;
+
+% current draw for gyroscope/accelerometer (according to datasheet)
+gyro = 5 *10^-3;
+
+totalCurrent = arduino_nano + xBee + servos + gyro;
+
+% the following equation solves for the minimum battery capacitance needed
+syms capacitance
+eq1 = solve(min_flying == (capacitance/1000)/totalCurrent*60, capacitance);
+
+% prints out the calculated measurements
+fprintf('The estimated total current draw from each component is %0.2f A\n', totalCurrent)
+fprintf('The estimated battery capacitance that can be used to power the plane for 10 minutes is %0.2f mAh\n', eq1)
+
+
+
+%%
+    clc;
+    clear all;
+    close all;
+
+    % this program determines the minimum flying time of the CDA, given the
+    % calculated total current and the chosen battery capacitance
+
+    capacitance = 250*10^-3; % the capacitance of the battery (in mAh)
+    xBee = 215 * 10^-3; 
+    servo = 2 * 213 *10^-3;
+    gyro = 5 * 10^-3;
+    nano = 20 * 10^-3;
+    
+    currentDraw = xBee + servo + gyro + nano
+
+    min_flying = (capacitance/currentDraw)*60;
+
+    fprintf('The estimated time the CDA can be powered on is %0.2f minutes\n', min_flying);
