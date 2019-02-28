@@ -1,6 +1,6 @@
-#include <SoftwareSerial.h>
-
 #include <Servo.h>
+
+#include <SoftwareSerial.h>
 
 Servo myservo; 
 
@@ -25,19 +25,19 @@ void loop(){
     //Serial.print(XBEEOUTPUT);
     Serial.print((char)XBEEOUTPUT);
   //CW
-  if (char(XBEEOUTPUT) == 'R') 
-  {
+    if (char(XBEEOUTPUT) == 'R') 
+    {
       myservo.write(0);
-  }
-  //CCW  
-  else if (char(XBEEOUTPUT) == 'L') 
-  { 
+      //CCW
+    } 
+    else if (char(XBEEOUTPUT) == 'L')
+    { 
       myservo.write(180);
-  }
-  //Neutral
-  else
-  {
+    }
+     //Neutral
+     else
+    {
      myservo.write(90);
+    }
   }
- }
 }
