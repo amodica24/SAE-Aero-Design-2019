@@ -46,6 +46,10 @@ label_y = 100
 verd24 = tkFont.Font(family='Verdana', size=24)
 
 
+# set all payload servos to closed
+vehicle.channels.overrides['6'] = 2000
+vehicle.channels.overrides['7'] = 2000
+
 # gets the altitude information
 alt_label = Label(text = "Altitude (ft)", font = verd24, bg = 'black', fg = 'white')
 alt_label.place(x=label_x,y=label_y)
@@ -166,14 +170,26 @@ def updateHUD(groundSpeed, roll, pitch, altitude,lat2,long2):
 # create the functions that display which payload was dropped
 def CDA():    
     CDA_label = Label(text = "CDA", font = ('Verdana', 100), fg = 'white', bg = 'black').place(x=100,y=150)
+    #sets the servos to open the payload 
+    vehicle.channels.overrides['6'] = 1000
+    vehicle.channels.overrides['7'] = 1000
+    vehicle.flush()
     return
 
 def supply():
     supply_label = Label(text = "Supplies", font = ('Verdana', 100), fg = 'white', bg = 'black').place(x = 100,y=150)
+    #sets the servos to open the payload 
+    vehicle.channels.overrides['6'] = 1000
+    vehicle.channels.overrides['7'] = 1000
+    vehicle.flush()
     return        
 
 def habitat():
     habitat_label = Label(text = altitude, font = ('Verdana', 100), fg = 'white', bg = 'black').place(x=100,y=150)
+    #sets the servos to open the payload 
+    vehicle.channels.overrides['6'] = 1000
+    vehicle.channels.overrides['7'] = 1000
+    vehicle.flush()
     return
 
 def toggleCSV():
