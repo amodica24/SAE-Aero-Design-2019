@@ -50,10 +50,6 @@ label_y = 100
 btn_x = 30
 btn_y = 740
 
-# set all payload servos to closed
-vehicle.channels.overrides['7'] = 2000
-vehicle.channels.overrides['8'] = 2000
-
 # Create Labels for: altitude, ground speed, latitude, longitude, and clock
 #
 #
@@ -181,6 +177,11 @@ def habitat():
     #vehicle.flush()
     return
 
+def reset_servo():
+    vehicle.channels.overrides['7'] = 2000 # set servo to closed position
+    vehicle.channels.overrides['8'] = 2000 # set servo to closed position
+    return
+
 # Create button configuration
 window.option_add("*Button.Background", "white")
 window.option_add("*Button.Foreground", "red")
@@ -214,17 +215,22 @@ CDA_button.place(x = btn_x, y = btn_y)
 supply_button = Button(window, text = "Supplies", command = supply, font = verd16, height = 2, width = 12, fg = "white", borderwidth = 0, bg = 'grey30')
 supply_button.place(x = btn_x + 175, y = btn_y)
 
+# Button for Habitat
+habitat_button = Button(window, text = "Habitat", command = habitat, font = verd16, height = 2, width = 12, fg = "white", borderwidth = 0, bg = 'grey30')
+habitat_button.place(x = btn_x + 2*175, y = btn_y)
+
+# Button to Reset Servos
+rst_servo_button = Button(window, text = "Reset Servos", command = reset_servo, font = verd16, height = 2, width = 12, fg = "white", borderwidth = 0, bg = 'grey30')
+rst_servo_button.place(x = btn_x + 3*175, y = btn_y)
+
 # Button for CSV
 CSV_button = tk.Button(window, text = "Log Data", command = toggleCSV, font = verd16, height = 2, width = 12, fg = "white", borderwidth = 0, bg = 'grey30')
 CSV_button.place(x = btn_x, y = btn_y-175)
 
-# Button for Habitat
-habitat_button = Button(window, text = "Habitat", command = habitat, font = verd16, height = 2, width = 12, fg = "white", borderwidth = 0, bg = 'grey30')
-habitat_button.place(x = btn_x + 175+175, y = btn_y)
-
 # Button to Exit
 stop = Button(window, text = "Quit", command = quitcommand, font = verd16, height = 2, width = 12, fg = "red", borderwidth = 0, bg = 'grey30')
 stop.place(x = btn_x+3*175, y = btn_y)
+
 
 tick()
 window.mainloop()
