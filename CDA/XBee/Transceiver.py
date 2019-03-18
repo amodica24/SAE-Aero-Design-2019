@@ -1,41 +1,71 @@
 import random
-import sys
 import os
-import time
-#import digi.xbee.devices
 from digi.xbee.devices import XBeeDevice
 from digi.xbee.devices import RemoteXBeeDevice
 from digi.xbee.models.address import XBee64BitAddress
-Tx = XBeeDevice("COM3", 9600)
-Rx= RemoteXBeeDevice(Tx, XBee64BitAddress.from_hex_string("0013A2004105B000"))
-received_ack = True
+from digi.xbee.models.status import TransmitStatus
+import tkinter as tk
+from tkinter import *
+from tkinter import font
+import sys
+import datetime
+import time
+
+
+Tx = XBeeDevice("COM5", 9600)
+Rx1= RemoteXBeeDevice(Tx, XBee64BitAddress.from_hex_string("0013A200416411DF"))
+Rx2= RemoteXBeeDevice(Tx, XBee64BitAddress.from_hex_string("0013A20041630A75")) 
+Rx3= RemoteXBeeDevice(Tx, XBee64BitAddress.from_hex_string("0013A200418B68F8"))
 Tx.open()
 
-#def message_received(data):
-xbee_message = Tx.read_data()
-        #if xbee_message.data == "Acknowledgment":
-        #               print "Acknowledgment received"
-        #               global recieved_ack
-        #               recieved_ack = True
-def my_data_received_callback(xbee_message):
-        address = xbee_message.remote_device.get_64bit_addr()
-        data = xbee_message.data.decode("utf8")
-        if data == "Acknowledgment":
-                print("Received data from %s: %s" % (address, data))
-                global received_ack
-                received_ack = True
+window = tk.Tk()
 
-# Add the callback.
-Tx.add_data_received_callback(my_data_received_callback)
+window.title('LMU AirLions')
+#You can set the geometry attribute to change the root windows size
+window.geometry("1000x1000") #You want the size of the app to be 500x500
+
+back = tk.Frame(window,bg='black')
+window.configure(background='black')
+
+helv46 = font.Font(family='Verdana', size=120)
+helv = font.Font(family='Verdana', size= 55)
+data_x = 925
+data_y = 165
+
+label_x = 825
+label_y = 100
+
+helv36 = font.Font(family='Verdana', size=16)
+btn_x = 30
+btn_y = 740
+
+verd24 = font.Font(family='Verdana', size=24) 
 
 
+def CDA1():    
+    print('servo 1 moved')
+    Tx.send_data(Rx1, "hi 1")
+    return
 
-while True:
-        try:
-                if received_ack == True:
-                        Tx.send_data(Rx, "Transmitting")
-                        received_ack= False
-                        time.sleep(1)
-        except KeyboardInterrupt:
-                break
+def CDA2():    
+    print('servo 2 moved')
+    Tx.send_data(Rx2, "hi 2")
+    return
+
+def CDA3():    
+    print('servo 3 moved')
+    Tx.send_data(Rx3, "hi 3")
+    return
+        
+
+CDA1_button = tk.Button(window, text = "CDA1", command = CDA1, font = helv36, height = 2, width = 12, fg = "white", bg = "red", borderwidth = 0)
+CDA1_button.pack()
+
+CDA2_button = tk.Button(window, text = "CDA2", command = CDA2, font = helv36, height = 2, width = 12, fg = "white", bg = "blue", borderwidth = 0)
+CDA2_button.pack()
+
+CDA3_button = tk.Button(window, text = "CDA3", command = CDA3, font = helv36, height = 2, width = 12, fg = "white", bg = "green", borderwidth = 0)
+CDA3_button.pack()
+
+window.mainloop()
 Tx.close()
