@@ -9,7 +9,6 @@ import tkFont
 from dronekit import connect, VehicleMode, Command, LocationGlobal
 from pymavlink import mavutil
 
-
 #set up csv file
 global csvtog
 csvtog = False
@@ -22,7 +21,7 @@ thiswriter = csv.writer(csvfile, delimiter = ' ', quoting=csv.QUOTE_MINIMAL)
 thiswriter.writerow(['Time:             ' , 'Ground speed:        ', 'Roll:               ', 'Pitch:                  ', 'Altitude:               '])
 
 # Connect to vehicle
-connectionString = "com4"
+connectionString = "com5"
 print "Connecting on: ",connectionString
 vehicle = connect(connectionString, wait_ready=["groundspeed","attitude","location.global_relative_frame"], baud=57600)
 
@@ -35,58 +34,63 @@ window.geometry("1540x840") #You want the size of the app to be 500x500
 back = tk.Frame(window,bg='black')
 window.configure(background='black')
 
-helv46 = tkFont.Font(family='Verdana', size=120)
-helv = tkFont.Font(family='Verdana', size= 55)
+# create font sizes
+helv120 = tkFont.Font(family='Verdana', size=120)
+verd55 = tkFont.Font(family='Verdana', size= 55)
+verd24 = tkFont.Font(family='Verdana', size=24)
+verd16 = tkFont.Font(family='Verdana', size=16)
+
+# create x and y coordinates
 data_x = 1010
 data_y = 165
-
 label_x = 925
 label_y = 100
 
-verd24 = tkFont.Font(family='Verdana', size=24)
-
+# Create button coordinates
+btn_x = 30
+btn_y = 740
 
 # set all payload servos to closed
-vehicle.channels.overrides['6'] = 2000
 vehicle.channels.overrides['7'] = 2000
+vehicle.channels.overrides['8'] = 2000
 
-# gets the altitude information
+# Create Labels for: altitude, ground speed, latitude, longitude, and clock
+#
+#
+
+# Altitude Label
 alt_label = Label(text = "Altitude (ft)", font = verd24, bg = 'black', fg = 'white')
 alt_label.place(x=label_x,y=label_y)
 alt1 = ''
-telem = Label(window, font = helv46, bg = 'black', fg = 'yellow')
-telem.pack(fill= BOTH, expand = 1)
-telem.place(x=data_x-60, y=label_y+40)
+alt2 = Label(window, font = helv120, bg = 'black', fg = 'yellow')
+alt2.pack(fill= BOTH, expand = 1)
+alt2.place(x=data_x-60, y=label_y+40)
 
-
-# gets the grounding speed information
+# Groundspeed Label
 speed_label = Label(text = "Speed (ft/s)", font = verd24 ,bg = 'black', fg = 'white')
 speed_label.place(x = label_x+300, y = label_y)
 speed1 = ''
-speed_text = Label(window, font = helv46, bg = 'black', fg = 'orange')
-speed_text.pack(fill= BOTH, expand = 1)
-speed_text.place(x=data_x+300-40, y=label_y+40)
+ground_speed = Label(window, font = helv120, bg = 'black', fg = 'orange')
+ground_speed.pack(fill= BOTH, expand = 1)
+ground_speed.place(x=data_x+300-40, y=label_y+40)
 
-
-# get latitude
+# Latitude Label
 lat_label = Label(text = " Latitude", font = verd24, bg = 'black', fg = 'white')
 lat_label.place(x = label_x, y=label_y+180+60)
 lat1 = ''
-lat_info = Label(window, font = helv, bg = 'black', fg = 'lime green')
-lat_info.pack(fill= BOTH, expand = 1)
-lat_info.place(x= data_x-150, y=label_y+180+65+60)
+latitude = Label(window, font = verd55, bg = 'black', fg = 'lime green')
+latitude.pack(fill= BOTH, expand = 1)
+latitude.place(x= data_x-150, y=label_y+180+65+60)
 
-
-# get longitude
+# Longitude Label
 long_label = Label(text = " Longitude", font = verd24, bg = 'black', fg = 'white')
 long_label.place(x=label_x + 300, y=label_y+180+60)
 long1 = ''
-long_info = Label(window, font = helv, bg = 'black', fg = 'red2')
-long_info.pack(fill= BOTH, expand = 1)
-long_info.place(x=data_x+120, y=label_y+180+65+60)
+longitude = Label(window, font = verd55, bg = 'black', fg = 'red2')
+longitude.pack(fill= BOTH, expand = 1)
+longitude.place(x=data_x+120, y=label_y+180+65+60)
 
-
-# make a time stamp
+# Time Label
 global time1
 time1 = ''
 global clock
@@ -94,22 +98,11 @@ clock = Label(window, font=('Verdana', 26), bg='black', fg = 'white')
 clock.pack(fill=BOTH, expand=1)
 clock.place(x=1100,y=20)
 
-
-#If you have a large number of widgets, like it looks like you will for your
-#game you can specify the attributes for all widgets simply like this.
-window.option_add("*Button.Background", "white")
-window.option_add("*Button.Foreground", "red")
-
-# create font size
-helv36 = tkFont.Font(family='Verdana', size=16)
-btn_x = 30
-btn_y = 740
-
-
-#Main loop, calls every 
+# Main loop gets called every 200ms to update altitude, speed, long, lat, and time
 #
 #
 
+# Time information
 def tick():
     global time1
     global clock
@@ -124,9 +117,7 @@ def tick():
     getFlightData()
     clock.after(200,tick)
     
-
-
-# get flight data
+# Flight information
 def getFlightData():
     groundSpeed = vehicle.groundspeed
     groundSpeed = int(groundSpeed*3.28084)
@@ -135,16 +126,12 @@ def getFlightData():
     altitude = vehicle.location.global_relative_frame.alt
     altitude = int(altitude*3.28084)
 
-
     lat2 = round(vehicle.location.global_frame.lat, 3)
     long2 = round(vehicle.location.global_frame.lon, 3)
 
-    
     if altitude < 0:    # Dont let the dropTime become imaginary
         altitude = 0
-
     global csvtog
-
     if csvtog:
         timeNow = time.strftime('%y-%m-%d %H:%M:%S')
         global csvfile
@@ -157,40 +144,46 @@ def getFlightData():
 
 
 def updateHUD(groundSpeed, roll, pitch, altitude,lat2,long2):
-    telem.config(text = altitude)
-
-    speed_text.config(text = groundSpeed)
-    
-    lat_info.config(text = lat2)
-    
-    long_info.config(text = long2)
-
+    alt2.config(text = altitude)
+    ground_speed.config(text = groundSpeed)  
+    latitude.config(text = lat2)
+    longitude.config(text = long2)
     return
     
 # create the functions that display which payload was dropped
-def CDA():    
-    CDA_label = Label(text = "CDA", font = ('Verdana', 100), fg = 'white', bg = 'black').place(x=100,y=150)
+def CDA():
+    CDA_label = Label(text = "CDA", font = ('Verdana', 100), fg = 'white', bg = 'black')
+    CDA_label.place(x=100,y=150)
+    
     #sets the servos to open the payload 
-    vehicle.channels.overrides['6'] = 1000
-    vehicle.channels.overrides['7'] = 1000
-    vehicle.flush()
+    vehicle.channels.overrides['7'] = 1300 # for competition, change to 1000
+    vehicle.channels.overrides['8'] = 1300 # for competition, change to 1000
+    #vehicle.flush()
     return
 
 def supply():
-    supply_label = Label(text = "Supplies", font = ('Verdana', 100), fg = 'white', bg = 'black').place(x = 100,y=150)
+    supply_label = Label(text = "Supplies", font = ('Verdana', 100), fg = 'white', bg = 'black')
+    supply_label.place(x = 100,y=150)
+    
     #sets the servos to open the payload 
-    vehicle.channels.overrides['6'] = 1000
-    vehicle.channels.overrides['7'] = 1000
-    vehicle.flush()
+    vehicle.channels.overrides['7'] = 1500 # for competition, change to 1000
+    vehicle.channels.overrides['8'] = 1500 # for competition, change to 1000
+    #vehicle.flush()
     return        
 
 def habitat():
-    habitat_label = Label(text = altitude, font = ('Verdana', 100), fg = 'white', bg = 'black').place(x=100,y=150)
+    habitat_label = Label(text = "Habitat", font = ('Verdana', 100), fg = 'white', bg = 'black')
+    habitat_label.place(x=100,y=150)
+    
     #sets the servos to open the payload 
-    vehicle.channels.overrides['6'] = 1000
-    vehicle.channels.overrides['7'] = 1000
-    vehicle.flush()
+    vehicle.channels.overrides['7'] = 1000 # for competition, change to 1000
+    vehicle.channels.overrides['8'] = 1000 # for competition, change to 1000
+    #vehicle.flush()
     return
+
+# Create button configuration
+window.option_add("*Button.Background", "white")
+window.option_add("*Button.Foreground", "red")
 
 def toggleCSV():
     global csvtog
@@ -206,28 +199,32 @@ def quitcommand():
     global csvfile
     csvfile.close()
     window.destroy()
+    vehicle.close()
     return
 
+# Create buttons to display visuals for payload drops
+#
+#
 
-# create buttons for dropping the payloads
-CDA_button = tk.Button(window, text = "CDA", command = CDA, font = helv36, height = 2, width = 12, fg = "white", borderwidth = 0, bg = 'grey30')
+# Button for CDA
+CDA_button = tk.Button(window, text = "CDA", command = CDA, font = verd16, height = 2, width = 12, fg = "white", borderwidth = 0, bg = 'grey30')
 CDA_button.place(x = btn_x, y = btn_y)
 
-CSV_button = tk.Button(window, text = "Log Data", command = toggleCSV, font = helv36, height = 2, width = 12, fg = "white", borderwidth = 0, bg = 'grey30')
-CSV_button.place(x = btn_x, y = btn_y-175)
-
-supply_button = Button(window, text = "Supplies", command = supply, font = helv36, height = 2, width = 12, fg = "white", borderwidth = 0, bg = 'grey30')
+# Button for Supplies
+supply_button = Button(window, text = "Supplies", command = supply, font = verd16, height = 2, width = 12, fg = "white", borderwidth = 0, bg = 'grey30')
 supply_button.place(x = btn_x + 175, y = btn_y)
 
-habitat_button = Button(window, text = "Habitat", command = habitat, font = helv36, height = 2, width = 12, fg = "white", borderwidth = 0, bg = 'grey30')
+# Button for CSV
+CSV_button = tk.Button(window, text = "Log Data", command = toggleCSV, font = verd16, height = 2, width = 12, fg = "white", borderwidth = 0, bg = 'grey30')
+CSV_button.place(x = btn_x, y = btn_y-175)
+
+# Button for Habitat
+habitat_button = Button(window, text = "Habitat", command = habitat, font = verd16, height = 2, width = 12, fg = "white", borderwidth = 0, bg = 'grey30')
 habitat_button.place(x = btn_x + 175+175, y = btn_y)
 
-stop = Button(window, text = "Quit", command = quitcommand, font = helv36, height = 2, width = 12, fg = "red", borderwidth = 0, bg = 'grey30')
+# Button to Exit
+stop = Button(window, text = "Quit", command = quitcommand, font = verd16, height = 2, width = 12, fg = "red", borderwidth = 0, bg = 'grey30')
 stop.place(x = btn_x+3*175, y = btn_y)
 
-
-
-
 tick()
-
 window.mainloop()
