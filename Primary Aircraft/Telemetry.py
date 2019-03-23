@@ -144,7 +144,6 @@ def getFlightData():
     updateHUD(groundSpeed, roll, pitch, altitude,lat2,long2)
     return (groundSpeed, roll, pitch, altitude,lat2,long2)
 
-
 def updateHUD(groundSpeed, roll, pitch, altitude,lat2,long2):
     alt2.config(text = altitude)
     ground_speed.config(text = groundSpeed)  
@@ -185,7 +184,7 @@ getDistance()
 def CDA():
     CDA_label = Label(text = "CDA", font = ('Verdana', 100), fg = 'white', bg = 'black')
     CDA_label.place(x=100,y=150)
-    
+
     #sets the servos to open the payload 
     vehicle.channels.overrides['7'] = 1500 # right servo
     vehicle.channels.overrides['8'] = 1500 # left servo
