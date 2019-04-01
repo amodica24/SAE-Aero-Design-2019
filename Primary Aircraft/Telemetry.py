@@ -17,7 +17,7 @@ global csvfile
 timename = time.strftime('%y-%m-%d___%H_%M_%S')
 csvfile = open('SAE_Data_' + timename + '.csv','wb')
 thiswriter = csv.writer(csvfile, delimiter = ' ', quoting=csv.QUOTE_MINIMAL)
-thiswriter.writerow(['Time:             ' , 'Ground speed:        ', 'Roll:               ', 'Pitch:                  ', 'Altitude:               '])
+thiswriter.writerow(['Time:             ' , 'Ground speed:        ', 'Altitude:               '])
 
 # Connect to vehicle
 connectionString = "com6"
@@ -93,8 +93,8 @@ longitude.pack(fill= BOTH, expand = 1)
 longitude.place(x=data_x+120, y=label_y+180+65+60-10)
 
 # Time Label
-global time1
-time1 = ''
+global timservo_pos
+timservo_pos = ''
 global clock
 clock = Label(window, font=('Verdana', 25), bg='black', fg = 'white')
 clock.pack(fill=BOTH, expand=1)
@@ -106,14 +106,14 @@ clock.place(x=1175,y=10)
 
 # Time information
 def tick():
-    global time1
+    global timservo_pos
     global clock
     # get the current local time from the PC
-    time2 = time.strftime('%y-%m-%d %H:%M:%S')
+    timservo_ch = time.strftime('%y-%m-%d %H:%M:%S')
     # if time string has changed, update it
-    if time2 != time1:
-        time1 = time2
-        clock.config(text=time2)
+    if timservo_ch != timservo_pos:
+        timservo_pos = timservo_ch
+        clock.config(text=timservo_ch)
     # calls itself every 200 milliseconds
     # to update the time display as needed
     getFlightData()
@@ -171,8 +171,8 @@ def distance():
 #updated distance function
 def getDistance():
     global dest1
-    #(d) = distance()
     d = 0
+    #(d) = distance()
     if d != dest1:
         dest1 = d
         waypoint.config(text = d)
@@ -182,41 +182,69 @@ getDistance()
 
 # create the functions that display which payload was dropped
 def CDA():
-    CDA_label = Label(text = "CDA", font = ('Verdana', 100), fg = 'white', bg = 'black')
+    CDA_label = Label(text = "CDA       ", font = ('Verdana', 100), fg = 'white', bg = 'black')
     CDA_label.place(x=100,y=150)
+    
+    # channel 4 is for the channel that will drop the CDAs
+    vehicle.channels.overrides['5'] = 905 # input a number
+    
+    # set a delay to drop the CDA in the back
+    #time.sleep(0.2)
 
-    #sets the servos to open the payload 
-    vehicle.channels.overrides['7'] = 1500 # right servo
-    vehicle.channels.overrides['8'] = 1500 # left servo
-    vehicle.flush()
+    # channel 3 is for the channel that will drop the last CDA
+    vehicle.channels.overrides['3'] = 1904 # input a number
     return
+    
 
 def supply():
     supply_label = Label(text = "Supplies", font = ('Verdana', 100), fg = 'white', bg = 'black')
     supply_label.place(x = 100,y=150)
-    
-    #sets the servos to open the payload 
-    vehicle.channels.overrides['7'] = 1500 # right servo
-    vehicle.channels.overrides['8'] = 1500 # leftt servo
-    vehicle.flush()
-    return        
+    # side door servos
+    vehicle.channels.overrides['7'] = 2000 # right door pin
+    vehicle.channels.overrides['6'] = 1000 # left door pin
+    # front wall servos
 
+    #vehicle.channels.overrides['7'] = 1000 # right side of the plane
+    #vehicle.channels.overrides['8'] = 2000 # left side of the plane
+    return
+ 
 def habitat():
     habitat_label = Label(text = "Habitat", font = ('Verdana', 100), fg = 'white', bg = 'black')
     habitat_label.place(x=100,y=150)
-    
-    #sets the servos to open the payload 
-    vehicle.channels.overrides['7'] = 1500 
-    vehicle.channels.overrides['8'] = 1500 
-    vehicle.flush()
+
+
+    # side door servos
+    vehicle.channels.overrides['7'] = 2000 # right door pin
+    vehicle.channels.overrides['6'] = 1000 # left door pin
+    # front wall servos
+
+    # side door servos
+    #vehicle.channels.overrides['5'] = 2000 # right door pin
+    #vehicle.channels.overrides['6'] = 1000 # left door pin
+    # front wall servos
+    #vehicle.channels.overrides['7'] = 1000 # right side of the plane
+    #vehicle.channels.overrides['8'] = 2000 # left side of the plane
     return
 
 # creates a function to reset the servo to its closed position
 def reset_servo():
-    # reset the servos to close the payload box
-    vehicle.channels.overrides['7'] = 2000 
-    vehicle.channels.overrides['8'] = 1000 
-    vehicle.flush()
+    rst_label = Label(text = "             ", font = ('Verdana', 100), fg = 'white', bg = 'black')
+    rst_label.place(x=100,y=150)
+
+    vehicle.channels.overrides['3'] = 1219
+    vehicle.channels.overrides['5'] = 1512
+
+    vehicle.channels.overrides['7'] = 1000
+    vehicle.channels.overrides['6'] = 2000
+    
+    """
+    # side door servos
+    vehicle.channels.overrides['5'] = 1000 # left door pin
+    vehicle.channels.overrides['6'] = 2000 # right door pin
+    # front wall servos
+    vehicle.channels.overrides['7'] = 2000 # right side of the plane
+    vehicle.channels.overrides['8'] = 1000 # left side of the plane
+    """
     return
 
 # Create button configuration
@@ -258,15 +286,43 @@ habitat_button.place(x = btn_x + 2*185, y = btn_y-10)
 
 # Button to Reset Servos
 rst_servo_button = Button(window, text = "Reset Servos", command = reset_servo, font = verd16, height = 2, width = 12, fg = "white", borderwidth = 0, bg = 'grey30')
-rst_servo_button.place(x = btn_x+185+100, y = btn_y-110)
+rst_servo_button.place(x = btn_x+185+90-60-30, y = btn_y-110)
 
 # Button for CSV
 CSV_button = tk.Button(window, text = "Log Data", command = toggleCSV, font = verd16, height = 2, width = 12, fg = "white", borderwidth = 0, bg = 'grey30')
-CSV_button.place(x = btn_x+100, y = btn_y-110)
+CSV_button.place(x = btn_x, y = btn_y-110)
 
 # Button to Exit
 stop = Button(window, text = "Quit", command = quitcommand, font = verd16, height = 2, width = 12, fg = "red", borderwidth = 0, bg = 'grey30')
 stop.place(x = btn_x+3*185, y = btn_y-10)
 
+"""
+def show_entry_fields():
+    if (servo_ch.get() == int(5)):
+        vehicle.channels.overrides['5'] = servo_pos.get()
+    elif (servo_ch.get() == 6):
+        vehicle.channels.overrides['6'] = servo_pos.get()
+    elif (servo_ch.get() == 7):
+        vehicle.channels.overrides['7'] = servo_pos.get()
+    elif (servo_ch.get() == 8):
+        vehicle.channels.overrides['8'] = servo_pos.get()
+
+servo_ch_label = Label(window, text="Channel", font = ('Verdana', 15), fg = 'white', bg = 'black')
+servo_ch_label.place(x=600-170, y = 620-30)
+
+pos_servo_label = Label(text = "Position", font = ('Verdana', 15), fg = 'white', bg = 'black')
+pos_servo_label.place(x=600-30, y=620-30)
+
+# enter the channel corresponding to the servo you want to move
+servo_ch = Entry(window, justify = CENTER)
+servo_ch.place(x=510-100, y=660-30)
+
+#enter the servo position (1000 to 2000ms)
+servo_pos = Entry(window, justify = CENTER)
+servo_pos.place(x=510+40, y = 660-30)
+
+enter_btn = Button(window, text = "Set Servo", height = 2, width = 15, font = 10, command=show_entry_fields, fg = 'white', bg = 'grey30',borderwidth = 0)
+enter_btn.place(x = 470, y = 660)   
+"""
 tick()
 window.mainloop()
