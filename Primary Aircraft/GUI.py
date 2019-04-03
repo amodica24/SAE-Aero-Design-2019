@@ -10,19 +10,30 @@ from dronekit import connect, VehicleMode, Command, LocationGlobal
 from pymavlink import mavutil
 import math
 
+global payload_drop
+payload_drop = ''
 # Set up import to CSV
 global csvtog
 csvtog = False
 global csvfile
 timename = time.strftime('%y-%m-%d___%H_%M_%S')
 csvfile = open('SAE_Data_' + timename + '.csv','wb')
-thiswriter = csv.writer(csvfile, delimiter = ' ', quoting=csv.QUOTE_MINIMAL)
-thiswriter.writerow(['Time:             ' , 'Ground speed:        ', 'Altitude:               '])
+thiswriter = csv.writer(csvfile, delimiter = ',', quoting=csv.QUOTE_MINIMAL)
+thiswriter.writerow(['Time:' , 'Altitude:', 'Groundpseed:', 'Raw Altitude:', 'Raw Groundspeed:', 'Home Location:', 'Latitude:', 'Longitude:', 'Notes'])
 
 # Connect to vehicle
 connectionString = "com6"
 print "Connecting on: ",connectionString
 vehicle = connect(connectionString, wait_ready=["groundspeed","attitude","location.global_relative_frame"], baud=57600)
+
+
+vehicle.home_location=vehicle.location.global_frame
+cmds = vehicle.commands
+cmds.download()
+cmds.wait_ready()
+
+home_alt = vehicle.home_location.alt
+home_alt = home_alt*3.28084
 
 window = tk.Tk()
 
@@ -128,18 +139,18 @@ def getFlightData():
     altitude = vehicle.location.global_relative_frame.alt
     altitude = int(altitude*3.28084)
 
+    if altitude < 0:
+        altitude = 0
+
     lat2 = round(vehicle.location.global_frame.lat, 1)
     long2 = round(vehicle.location.global_frame.lon, 1)
-
-    if altitude < 0:    # Dont let the dropTime become imaginary
-        altitude = 0
 
     global csvtog
     if csvtog:
         timeNow = time.strftime('%y-%m-%d %H:%M:%S')
         global csvfile
-        thiswriter = csv.writer(csvfile, delimiter = ' ', quoting=csv.QUOTE_MINIMAL)
-        thiswriter.writerow([timeNow ,'____', groundSpeed,'_____', altitude])
+        thiswriter = csv.writer(csvfile, delimiter = ',', quoting=csv.QUOTE_MINIMAL)
+        thiswriter.writerow([timeNow , altitude, groundSpeed, vehicle.location.global_relative_frame.alt*3.28084, vehicle.groundspeed*3.28084, vehicle.home_location.alt*3.28084, vehicle.location.global_frame.lat, vehicle.location.global_frame.lon, payload_drop])
         
     updateHUD(groundSpeed, roll, pitch, altitude,lat2,long2)
     return (groundSpeed, roll, pitch, altitude,lat2,long2)
@@ -183,8 +194,13 @@ getDistance()
 # create the functions that display which payload was dropped
 def CDA():
     CDA_label = Label(text = "CDA       ", font = ('Verdana', 100), fg = 'white', bg = 'black')
-    CDA_label.place(x=100,y=150)
-    
+    CDA_label.place(x=100,y=150)    
+    global csvfile
+    timeNow = time.strftime('%y-%m-%d %H:%M:%S')
+    payload_drop = "CDAs were dropped"
+    thiswriter = csv.writer(csvfile, delimiter = ',', quoting=csv.QUOTE_MINIMAL)
+    thiswriter.writerow([timeNow , int(vehicle.location.global_relative_frame.alt*3.28084), int(vehicle.groundspeed*3.2804), vehicle.location.global_relative_frame.alt*3.28084, vehicle.groundspeed*3.28084, vehicle.home_location.alt*3.28084, vehicle.location.global_frame.lat, vehicle.location.global_frame.lon, payload_drop])
+
     # channel 4 is for the channel that will drop the CDAs
     vehicle.channels.overrides['5'] = 905 # input a number
     
@@ -199,6 +215,11 @@ def CDA():
 def supply():
     supply_label = Label(text = "Supplies", font = ('Verdana', 100), fg = 'white', bg = 'black')
     supply_label.place(x = 100,y=150)
+   
+    payload_drop = "Supplies were dropped"
+    thiswriter = csv.writer(csvfile, delimiter = ',', quoting=csv.QUOTE_MINIMAL)
+    thiswriter.writerow([timeNow , int(vehicle.location.global_relative_frame.alt*3.28084), int(vehicle.groundspeed*3.2804), vehicle.location.global_relative_frame.alt*3.28084, vehicle.groundspeed*3.28084, vehicle.home_location.alt*3.28084, vehicle.location.global_frame.lat, vehicle.location.global_frame.lon, payload_drop])
+
     # side door servos
     vehicle.channels.overrides['7'] = 2000 # right door pin
     vehicle.channels.overrides['6'] = 1000 # left door pin
@@ -207,11 +228,11 @@ def supply():
     #vehicle.channels.overrides['7'] = 1000 # right side of the plane
     #vehicle.channels.overrides['8'] = 2000 # left side of the plane
     return
+
  
 def habitat():
     habitat_label = Label(text = "Habitat", font = ('Verdana', 100), fg = 'white', bg = 'black')
     habitat_label.place(x=100,y=150)
-
 
     # side door servos
     vehicle.channels.overrides['7'] = 2000 # right door pin
@@ -296,16 +317,23 @@ CSV_button.place(x = btn_x, y = btn_y-110)
 stop = Button(window, text = "Quit", command = quitcommand, font = verd16, height = 2, width = 12, fg = "red", borderwidth = 0, bg = 'grey30')
 stop.place(x = btn_x+3*185, y = btn_y-10)
 
-"""
+
 def show_entry_fields():
-    if (servo_ch.get() == int(5)):
-        vehicle.channels.overrides['5'] = servo_pos.get()
-    elif (servo_ch.get() == 6):
-        vehicle.channels.overrides['6'] = servo_pos.get()
-    elif (servo_ch.get() == 7):
-        vehicle.channels.overrides['7'] = servo_pos.get()
-    elif (servo_ch.get() == 8):
-        vehicle.channels.overrides['8'] = servo_pos.get()
+    if (int(servo_ch.get()) == int(3)):
+        vehicle.channels.overrides['3'] = int(servo_pos.get())
+        print vehicle.channels['3']
+    elif (int(servo_ch.get()) == int(5)):
+        vehicle.channels.overrides['5'] = int(servo_pos.get())
+        print vehicle.channels['5']
+    elif (int(servo_ch.get()) == int(6)):
+        vehicle.channels.overrides['6'] = int(servo_pos.get())
+        print vehicle.channels['6']
+    elif (int(servo_ch.get()) == int(7)):
+        vehicle.channels.overrides['7'] = int(servo_pos.get())
+        print vehicle.channels['7']
+    elif (int(servo_ch.get()) == int(8)):
+        vehicle.channels.overrides['8'] = int(servo_pos.get())
+        print vehicle.channels['8']
 
 servo_ch_label = Label(window, text="Channel", font = ('Verdana', 15), fg = 'white', bg = 'black')
 servo_ch_label.place(x=600-170, y = 620-30)
@@ -323,6 +351,6 @@ servo_pos.place(x=510+40, y = 660-30)
 
 enter_btn = Button(window, text = "Set Servo", height = 2, width = 15, font = 10, command=show_entry_fields, fg = 'white', bg = 'grey30',borderwidth = 0)
 enter_btn.place(x = 470, y = 660)   
-"""
+
 tick()
 window.mainloop()
