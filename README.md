@@ -1,3 +1,3 @@
 # SAE-Aero-Design-2019
 
-This is the file containing code for the SAE Aero Design
+This folder contains code for the 2019 SAE Aero Design West Competition by Loyola Marymount University's Advanced Class.
