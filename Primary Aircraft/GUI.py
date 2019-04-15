@@ -9,6 +9,7 @@ import tkFont
 from dronekit import connect, VehicleMode, Command, LocationGlobal
 from pymavlink import mavutil
 import math
+from geopy.distance import geodesic
 
 global payload_drop
 payload_drop = ''
@@ -41,10 +42,10 @@ verd24 = tkFont.Font(family='Verdana', size=24)
 verd16 = tkFont.Font(family='Verdana', size=16)
 verd = tkFont.Font(family='Verdana', size=14)
 
-dist_to = 0
+global dist_to
 global dlon
 global dlat
-
+dist_to = 0
 dlon = 0
 dlat = 0
 
@@ -59,7 +60,6 @@ btn_x = 30
 btn_y = 740
 
 # Create Labels for: altitude, ground speed, latitude, longitude, and clock
-
 # Altitude Label
 alt_label = Label(text = "Altitude (ft)", font = verd24, bg = 'black', fg = 'white')
 alt_label.place(x=label_x+100,y=label_y-10)
@@ -107,7 +107,6 @@ cur_long_label.place(x=data_x+10+200+30, y=label_y+180+60-10+200+100)
 cur_lat_label = Label(text = "Target Lat 34.1753158", font = verd, bg = 'black', fg = 'white')
 cur_lat_label.place(x=data_x+10+200+60-400, y=label_y+180+60-10+200+100)
 
-
 # Time Label
 global time2
 time2 = ''
@@ -115,7 +114,6 @@ global clock
 clock = Label(window, font=('Verdana', 25), bg='black', fg = 'white')
 clock.pack(fill=BOTH, expand=1)
 clock.place(x=1175,y=10)
-
 
 cmds = vehicle.commands
 cmds.download()
@@ -141,26 +139,24 @@ def tick():
 
 # Returns the distance between the current latitude and longitude and where we want to go
 def distance():
+    global dist_to
     lat3 = vehicle.location.global_frame.lat
     long3 = vehicle.location.global_frame.lon
 
-    dest_lat = 34.1753158
-
-    dest_long = -118.4812373
-    radius = 3959 * 5280  # in feet
+    dest_lat = 34.175297
+    dest_long = -118.481256
 
     global dlon
     global dlat
 
     dlat = (dest_lat-lat3)*363918
     dlon = (dest_long-long3)*303099
-    print lat3
-
-    print dlat
-    print dlon
+    """
+    print "current latitude" lat3
+    print "distance between the current latitude coordinate and target coordinate" dlat
+    print "distance between the current longitude coordinate and target coordinate" dlon
     a = math.sqrt(dlat*dlat+dlon*dlon)
-
-
+    """
     if (dlon > 20 and dlat > 20 ):
         compass_label = Label(text = "NW", font = verd55, bg = 'black', fg = 'white')
         compass_label.place(x = 400, y = 500)
@@ -188,6 +184,11 @@ def distance():
         compass_label = Label(text = "E", font = verd55, bg = 'black', fg = 'white')
         compass_label.place(x = 400, y = 500)
     
+    
+    current_loc = (vehicle.location.global_frame.lat, vehicle.location.global_frame.lon)
+    target_loc = (34.175297, -118.481256)
+    a = geodesic(current_loc, target_loc).feet
+
     dist_to = a
     dist_to = int(dist_to)
     return (dist_to)
@@ -195,6 +196,7 @@ def distance():
 #updated distance function
 def getDistance():
     global dest1
+    global dist_to
     dist_to = distance()
     if dist_to != dest1:
         dest1 = dist_to
@@ -212,16 +214,24 @@ def getFlightData():
     altitude = int(altitude*3.28084)
 
     if altitude < 0:
-        altitude = 0
+        altitude = -1
 
     try:
-        global x3
-        global y3
+        global x3 # temp latitude
+        global y3 # temp longitude
+        global a1 # temp altitude
+        global g1 # temp groundpeed
+        
+        a1 = altitude
+        g1 = groundSpeed
+
         lat2 = vehicle.location.global_frame.lat
         x3 = lat2
         long2 = vehicle.location.global_frame.lon
         y3 = long2
     except:
+        altitude = a1
+        groundSpeed = g1
         lat2 = x3
         long2 = y3
 
@@ -229,6 +239,7 @@ def getFlightData():
     if csvtog:
         timeNow = time.strftime('%y-%m-%d %H:%M:%S')
         global csvfile
+        global dist_to
         thiswriter = csv.writer(csvfile, delimiter = ',', quoting=csv.QUOTE_MINIMAL)
         dist_to = distance()
         thiswriter.writerow([timeNow, int(vehicle.location.global_relative_frame.alt*3.28084), vehicle.location.global_relative_frame.alt*3.28084, int(vehicle.groundspeed*3.2804),vehicle.groundspeed*3.28084, dist_to, vehicle.location.global_frame.lat, vehicle.location.global_frame.lon, payload_drop])
@@ -259,6 +270,7 @@ def CDA():
     CDA_alt_label.place(x=129,y=350)    
 
     global csvfile
+    global dist_to
 
     timeNow = time.strftime('%y-%m-%d %H:%M:%S')
     payload_drop = "CDAs were dropped"
@@ -282,7 +294,8 @@ def supply():
     supply_alt_label = Label(text = supply_alt, font = ('Verdana', 100), fg = 'yellow', bg = 'black')
     supply_alt_label.place(x=600,y=350)      
     
-    global csvfile   
+    global csvfile
+    global dist_to
     timeNow = time.strftime('%y-%m-%d %H:%M:%S')
     payload_drop = "Supplies and habitats were dropped!"
     thiswriter = csv.writer(csvfile, delimiter = ',', quoting=csv.QUOTE_MINIMAL)
