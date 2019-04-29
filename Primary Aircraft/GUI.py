@@ -143,6 +143,7 @@ def distance():
     lat3 = vehicle.location.global_frame.lat
     long3 = vehicle.location.global_frame.lon
 
+    # get the destination coordinates
     dest_lat = 34.175297
     dest_long = -118.481256
 
@@ -157,40 +158,43 @@ def distance():
     print "distance between the current longitude coordinate and target coordinate" dlon
     a = math.sqrt(dlat*dlat+dlon*dlon)
     """
+
     if (dlon > 20 and dlat > 20 ):
         compass_label = Label(text = "NW", font = verd55, bg = 'black', fg = 'white')
-        compass_label.place(x = 400, y = 500)
+        compass_label.place(x = 800, y = 300)
     elif(dlon > 20 and dlat < 20 and dlat > -20):
         compass_label = Label(text = "N", font = verd55, bg = 'black', fg = 'white')
-        compass_label.place(x = 400, y = 500)
+        compass_label.place(x = 800, y = 300)
     elif(dlon > 20 and dlat < -20):
         compass_label = Label(text = "NE", font = verd55, bg = 'black', fg = 'white')
-        compass_label.place(x = 400, y = 500)
-
+        compass_label.place(x = 800, y = 300)
     elif(dlon < 20 and dlon > -20 and dlat > 20):
         compass_label = Label(text = "W", font = verd55, bg = 'black', fg = 'white')
-        compass_label.place(x = 400, y = 500)
+        compass_label.place(x = 800, y = 300)
     elif(dlon < -20 and dlat < -20):
         compass_label = Label(text = "SE", font = verd55, bg = 'black', fg = 'white')
-        compass_label.place(x = 400, y = 500)
+        compass_label.place(x = 800, y = 300)
     elif(dlon < -20 and dlat > -20 and dlat < 20):
         compass_label = Label(text = "S", font = verd55, bg = 'black', fg = 'white')
-        compass_label.place(x = 400, y = 500)
+        compass_label.place(x = 800, y = 300)
     elif(dlon < -20 and dlat > 20):
         compass_label = Label(text = "SW", font = verd55, bg = 'black', fg = 'white')
-        compass_label.place(x = 400, y = 500)
+        compass_label.place(x = 800, y = 300)
     
     elif(dlon < -20 and dlon < 20 and dlat < -20):
         compass_label = Label(text = "E", font = verd55, bg = 'black', fg = 'white')
-        compass_label.place(x = 400, y = 500)
+        compass_label.place(x = 800, y = 300)
     
     
     current_loc = (vehicle.location.global_frame.lat, vehicle.location.global_frame.lon)
-    target_loc = (34.175297, -118.481256)
-    a = geodesic(current_loc, target_loc).feet
 
+    # put the target coordinates here
+    target_loc = (34.175297, -118.481256)
+    # using a library to determine distance
+    a = geodesic(current_loc, target_loc).feet
     dist_to = a
     dist_to = int(dist_to)
+    # this is to display the distance
     return (dist_to)
 
 #updated distance function
