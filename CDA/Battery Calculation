@@ -43,18 +43,18 @@ fprintf('The estimated battery capacitance that can be used to power the plane f
     clc;
     clear all;
     close all;
-
+    
     % this program determines the minimum flying time of the CDA, given the
     % calculated total current and the chosen battery capacitance
 
     capacitance = 250*10^-3; % the capacitance of the battery (in mAh)
     xBee = 215 * 10^-3; 
-    servo = 2 * 213 *10^-3;
+    servo = 2 * 473 *10^-3;
     gyro = 5 * 10^-3;
     nano = 20 * 10^-3;
     
     currentDraw = xBee + servo + gyro + nano
 
-    min_flying = (capacitance/currentDraw)*60;
+    min_flying = (capacitance/currentDraw)*60*0.80;
 
     fprintf('The estimated time the CDA can be powered on is %0.2f minutes\n', min_flying);
