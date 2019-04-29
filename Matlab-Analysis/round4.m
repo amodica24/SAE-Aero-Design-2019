@@ -20,9 +20,10 @@ xlabel('Longitude')
 ylabel('Latitude')
 zlabel('Altitude (ft)')
 ylabel(colorbar, 'Altitude (ft)')
-
+ 
 hold off
 hBar1 = colorbar;
+
 
 %// Set its ylabel property
 ylabel(hBar1,'Altitude (ft)','FontSize',12);
@@ -30,6 +31,22 @@ ylabel(hBar1,'Altitude (ft)','FontSize',12);
 %// Get its position
 BarPos = get(hBar1,'position');
 
+hold on
+% Radius =50 ft rad
+R=0.00015;
+%Base at coordinates of dest.
+x0=-118.481256;y0=34.175297;z0=100;
+% Height = 100
+h=100
+[x,y,z]=cylinder(R);
+x=x+x0;
+y=y+y0;
+z=z*h+z0;
+% to plot
+surf(x,y,z)
+%circle(-118.481256,34.175297, 0.00015)
+plot3(-118.481289,34.1754627,118,'p','MarkerFaceColor','red')
+hold off
 
 % destination coordinates
 %dest_lat = 34.175297;
