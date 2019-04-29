@@ -30,3 +30,14 @@ ylabel(hBar1,'Altitude (ft)','FontSize',12);
 %// Get its position
 BarPos = get(hBar1,'position');
 
+
+% destination coordinates
+%dest_lat = 34.175297;
+%dest_long = -118.481256;
+
+%drop coordinates
+
+%drop_lat = 34.1754627;
+%drop_long = -118.481289;
+
+
