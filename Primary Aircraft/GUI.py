@@ -11,26 +11,51 @@ from pymavlink import mavutil
 import math
 from geopy.distance import geodesic
 
+
+# create global statement to write the instance when payload was released
 global payload_drop
 payload_drop = ''
+
+# global variables 
+global dist_to # distance to target
+global dlon    # distance to target (longitude)
+global dlat    # distance to target (latitude)
+
+# instantiated global variables
+dist_to = 0
+dlon = 0
+dlat = 0
+
 # Set up import to CSV
 global csvtog
 csvtog = False
 global csvfile
+
 timename = time.strftime('%y-%m-%d___%H_%M_%S')
 csvfile = open('SAE_Data_' + timename + '.csv','wb')
 thiswriter = csv.writer(csvfile, delimiter = ',', quoting=csv.QUOTE_MINIMAL)
 thiswriter.writerow(['Time:' , 'Altitude:', 'Raw Altitude:', 'Groundspeed:', 'Raw Groundspeed:', 'Dist. to Waypoint','Latitude:', 'Longitude:', 'Notes'])
-# Connect to vehicle
+
+
+# Connect to Pixhawk (dronekit library)
 connectionString = "com6"
 print "Connecting on: ",connectionString
 vehicle = connect(connectionString, wait_ready=["groundspeed","location.global_relative_frame"], baud=57600)
+
+# downloads commands
+cmds = vehicle.commands
+cmds.download()
+cmds.wait_ready()
 
 window = tk.Tk()
 
 window.title('LMU AirLions')
 #You can set the geometry attribute to change the root windows size
-window.geometry("1540x840") #You want the size of the app to be 500x500
+window.geometry("1540x840") # change the size of the GUI
+
+# Create button configuration
+window.option_add("*Button.Background", "white")
+window.option_add("*Button.Foreground", "red")
 
 back = tk.Frame(window,bg='black')
 window.configure(background='black')
@@ -41,13 +66,6 @@ verd55 = tkFont.Font(family='Verdana', size= 55)
 verd24 = tkFont.Font(family='Verdana', size=24)
 verd16 = tkFont.Font(family='Verdana', size=16)
 verd = tkFont.Font(family='Verdana', size=14)
-
-global dist_to
-global dlon
-global dlat
-dist_to = 0
-dlon = 0
-dlat = 0
 
 # create x and y coordinates
 data_x = 1010
@@ -66,7 +84,7 @@ alt_label.place(x=label_x+100,y=label_y-10)
 alt1 = ''
 alt2 = Label(window, font = helv120, bg = 'black', fg = 'yellow')
 alt2.pack(fill= BOTH, expand = 1)
-alt2.place(x=data_x+40, y=label_y+40-10)
+alt2.place(x=data_x+40, y=label_y+30)
 
 # Groundspeed Label
 speed_label = Label(text = "Speed (ft/s)", font = verd24 ,bg = 'black', fg = 'white')
@@ -74,11 +92,11 @@ speed_label.place(x = label_x+350, y = label_y-10)
 speed1 = ''
 ground_speed = Label(window, font = helv120, bg = 'black', fg = 'orange')
 ground_speed.pack(fill= BOTH, expand = 1)
-ground_speed.place(x=data_x+310, y=label_y+40-10)
+ground_speed.place(x=data_x+310, y=label_y+30)
 
 # Distance to Waypoint Label
 dest_label = Label(text = "Dist. to WP (ft)", font = verd24, bg = 'black', fg = 'white')
-dest_label.place(x = label_x+150, y=label_y+180+60-10)
+dest_label.place(x = label_x+150, y=label_y+230)
 dest1 = ''
 waypoint = Label(window, font = verd55, bg = 'black', fg = 'deep sky blue')
 waypoint.pack(fill= BOTH, expand = 1)
@@ -92,18 +110,17 @@ latitude = Label(window, font = verd, bg = 'black', fg = 'lime green')
 latitude.place(x= data_x-150+30, y=label_y+180+60-10+200+60)
 
 # Longitude Label
-#long_label1 =Label(text = "Longitude", font = verd16, bg = 'black', fg = 'white') 
 long_label = Label(text = "Longitude", font = verd16, bg = 'black', fg = 'white')
-#long_label1.place(x=label_x + 300, y=label_y+180+60-10)
 long_label.place(x = label_x+10+300,  y=label_y+180+60-10+200)
 long1 = ''
 longitude = Label(window, font = verd, bg = 'black', fg = 'red2')
 longitude.place(x=data_x+10+200+30, y=label_y+180+60-10+200+60)
 
-# show current latitude and longitude
+# Target Longitude
 cur_long_label = Label(text = "Target Long -118.4812373", font = verd, bg = 'black', fg = 'white')
 cur_long_label.place(x=data_x+10+200+30, y=label_y+180+60-10+200+100)
 
+# Target Latitude
 cur_lat_label = Label(text = "Target Lat 34.1753158", font = verd, bg = 'black', fg = 'white')
 cur_lat_label.place(x=data_x+10+200+60-400, y=label_y+180+60-10+200+100)
 
@@ -115,9 +132,6 @@ clock = Label(window, font=('Verdana', 25), bg='black', fg = 'white')
 clock.pack(fill=BOTH, expand=1)
 clock.place(x=1175,y=10)
 
-cmds = vehicle.commands
-cmds.download()
-cmds.wait_ready()
 
 # Main loop gets called every 200ms to update altitude, speed, long, lat, and time
 #
@@ -139,11 +153,13 @@ def tick():
 
 # Returns the distance between the current latitude and longitude and where we want to go
 def distance():
+    # call back the global variable
     global dist_to
-    lat3 = vehicle.location.global_frame.lat
-    long3 = vehicle.location.global_frame.lon
 
-    # get the destination coordinates
+    lat3 = vehicle.location.global_frame.lat  # current latitude coordinates
+    long3 = vehicle.location.global_frame.lon # current longitude coordinates
+
+    # Destination coordinates
     dest_lat = 34.175297
     dest_long = -118.481256
 
@@ -152,52 +168,60 @@ def distance():
 
     dlat = (dest_lat-lat3)*363918
     dlon = (dest_long-long3)*303099
+    
+    # used the following code to compare lateral and longitude results with the previous lines
+    # of code
     """
     print "current latitude" lat3
     print "distance between the current latitude coordinate and target coordinate" dlat
     print "distance between the current longitude coordinate and target coordinate" dlon
     a = math.sqrt(dlat*dlat+dlon*dlon)
     """
-
+    # create a compass heading 
+    
+    # NORTHWEST
     if (dlon > 20 and dlat > 20 ):
         compass_label = Label(text = "NW", font = verd55, bg = 'black', fg = 'white')
         compass_label.place(x = 800, y = 300)
+    # NORTH
     elif(dlon > 20 and dlat < 20 and dlat > -20):
         compass_label = Label(text = "N", font = verd55, bg = 'black', fg = 'white')
         compass_label.place(x = 800, y = 300)
+    # NORTHEAST
     elif(dlon > 20 and dlat < -20):
         compass_label = Label(text = "NE", font = verd55, bg = 'black', fg = 'white')
         compass_label.place(x = 800, y = 300)
+    # WEST
     elif(dlon < 20 and dlon > -20 and dlat > 20):
         compass_label = Label(text = "W", font = verd55, bg = 'black', fg = 'white')
         compass_label.place(x = 800, y = 300)
+    # SOUTHEAST
     elif(dlon < -20 and dlat < -20):
         compass_label = Label(text = "SE", font = verd55, bg = 'black', fg = 'white')
         compass_label.place(x = 800, y = 300)
+    # SOUTH
     elif(dlon < -20 and dlat > -20 and dlat < 20):
         compass_label = Label(text = "S", font = verd55, bg = 'black', fg = 'white')
         compass_label.place(x = 800, y = 300)
+    # SOUTHWEST
     elif(dlon < -20 and dlat > 20):
         compass_label = Label(text = "SW", font = verd55, bg = 'black', fg = 'white')
         compass_label.place(x = 800, y = 300)
-    
+    # EAST
     elif(dlon < -20 and dlon < 20 and dlat < -20):
         compass_label = Label(text = "E", font = verd55, bg = 'black', fg = 'white')
         compass_label.place(x = 800, y = 300)
-    
-    
-    current_loc = (vehicle.location.global_frame.lat, vehicle.location.global_frame.lon)
 
-    # put the target coordinates here
-    target_loc = (34.175297, -118.481256)
-    # using a library to determine distance
+    # this is from the geodesic python library which was more accurate
+    # than using pythagorean theorem    
+    current_loc = (vehicle.location.global_frame.lat, vehicle.location.global_frame.lon) # current coordinates
+    target_loc = (34.175297, -118.481256) # target coordinates
     a = geodesic(current_loc, target_loc).feet
     dist_to = a
     dist_to = int(dist_to)
-    # this is to display the distance
-    return (dist_to)
+    return (dist_to) # return the distance calculated
 
-#updated distance function
+# Updates the distance readings and label
 def getDistance():
     global dest1
     global dist_to
@@ -206,7 +230,6 @@ def getDistance():
         dest1 = dist_to
         waypoint.config(text = dist_to)
     waypoint.after(300,getDistance)
-
 distance()    
 getDistance()
 
@@ -219,7 +242,8 @@ def getFlightData():
 
     if altitude < 0:
         altitude = -1
-
+    
+    # Prevents from losing connection and losing readings
     try:
         global x3 # temp latitude
         global y3 # temp longitude
@@ -312,15 +336,22 @@ def supply():
  
 # creates a function to reset the servo to its closed position
 def reset_servo():  
-    #vehicle.channels.overrides['3'] = 1219
     vehicle.channels.overrides['5'] = 2500
-    vehicle.channels.overrides['6'] = 905 # input a number
+    vehicle.channels.overrides['6'] = 905 
     vehicle.channels.overrides['8'] = 500
     return
 
-# Create button configuration
-window.option_add("*Button.Background", "white")
-window.option_add("*Button.Foreground", "red")
+def show_entry_fields():    
+    if (int(servo_ch.get()) == int(3)):
+        vehicle.channels.overrides['3'] = int(servo_pos.get())
+    elif (int(servo_ch.get()) == int(5)):
+        vehicle.channels.overrides['5'] = int(servo_pos.get())
+    elif (int(servo_ch.get()) == int(6)):
+        vehicle.channels.overrides['6'] = int(servo_pos.get())
+    elif (int(servo_ch.get()) == int(7)):
+        vehicle.channels.overrides['7'] = int(servo_pos.get())
+    elif (int(servo_ch.get()) == int(8)):
+        vehicle.channels.overrides['8'] = int(servo_pos.get())
 
 def toggleCSV():
     global csvtog
@@ -340,8 +371,6 @@ def quitcommand():
     return
 
 # Create buttons to display visuals for payload drops
-#
-#
 
 # Button for CDA
 CDA_button = tk.Button(window, text = "CDA", command = CDA, font = verd16, height = 2, width = 12, fg = "white", borderwidth = 0, bg = 'grey30')
@@ -363,34 +392,24 @@ CSV_button.place(x = btn_x, y = btn_y-110)
 stop = Button(window, text = "Quit", command = quitcommand, font = verd16, height = 2, width = 12, fg = "red", borderwidth = 0, bg = 'grey30')
 stop.place(x = btn_x+2*185+80, y = btn_y-10)
 
-def show_entry_fields():    
-    if (int(servo_ch.get()) == int(3)):
-        vehicle.channels.overrides['3'] = int(servo_pos.get())
-    elif (int(servo_ch.get()) == int(5)):
-        vehicle.channels.overrides['5'] = int(servo_pos.get())
-    elif (int(servo_ch.get()) == int(6)):
-        vehicle.channels.overrides['6'] = int(servo_pos.get())
-    elif (int(servo_ch.get()) == int(7)):
-        vehicle.channels.overrides['7'] = int(servo_pos.get())
-    elif (int(servo_ch.get()) == int(8)):
-        vehicle.channels.overrides['8'] = int(servo_pos.get())
-
+# label for the channel input
 servo_ch_label = Label(window, text="Channel", font = ('Verdana', 15), fg = 'white', bg = 'black')
-servo_ch_label.place(x=600-170, y = 620-30)
+servo_ch_label.place(x=600-170, y = 590)
 
+# label for the position input
 pos_servo_label = Label(text = "Position", font = ('Verdana', 15), fg = 'white', bg = 'black')
-pos_servo_label.place(x=600-30, y=620-30)
+pos_servo_label.place(x=570, y=590)
 
 # enter the channel corresponding to the servo you want to move
 servo_ch = Entry(window, justify = CENTER)
-servo_ch.place(x=510-100, y=660-30)
+servo_ch.place(x=410, y=630)
 
-#enter the servo position (1000 to 2000ms)
+#enter the servo position
 servo_pos = Entry(window, justify = CENTER)
-servo_pos.place(x=510+40, y = 660-30)
+servo_pos.place(x=550, y = 630)
 
 enter_btn = Button(window, text = "Set Servo", height = 2, width = 15, font = 10, command=show_entry_fields, fg = 'white', bg = 'grey30',borderwidth = 0)
-enter_btn.place(x = 470, y = 660)   
+enter_btn.place(x = 470, y = 660)
 
 tick()
 window.mainloop()
